@@ -1,10 +1,52 @@
-apiVersion: backstage.io/v1alpha1
-kind: Component
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
 metadata:
-  name: backstage-templates
+  name: springboot-ci-template
+  title: Spring Boot App con CI/CD
+  description: Crea una aplicación Spring Boot con pipeline automático
   annotations:
     github.com/project-slug: hdteck/backstage-templates
+
 spec:
-  type: other
-  lifecycle: unknown
-  owner: guests
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Configuración de la aplicación
+      required:
+        - name
+        - repoUrl
+      properties:
+        name:
+          type: string
+          title: Nombre de la aplicación
+        description:
+          type: string
+          title: Descripción
+        repoUrl:
+          type: string
+          title: Repositorio GitHub destino
+
+  steps:
+    - id: fetch-base
+      name: Generar proyecto base
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+
+    - id: publish
+      name: Crear repositorio en GitHub
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+
+    - id: register
+      name: Registrar en catálogo
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
