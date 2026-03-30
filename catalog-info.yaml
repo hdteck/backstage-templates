@@ -51,15 +51,16 @@ spec:
         url: ./ci-template
         targetPath: .github/workflows
 
-    # 3️⃣ Crear repo nuevo y subir todos los archivos
+    # 3️⃣ Crear repo nuevo en GitHub y subir todos los archivos
     - id: publish
       name: Crear repo en GitHub y subir código
-      action: github:push
+      action: publish:github
       input:
         repoUrl: github.com?owner=hdteck&repo=${{ parameters.repoName }}
-        files:
-          - path: .
-            content: ${{ steps.fetch-base.output.files }}
+        defaultBranch: main
+        description: "Aplicación generada con Backstage"
+        access: public   # cambiar a private si quieres
+        includeAllFiles: true   # sube todos los archivos generados por fetch
 
     # 4️⃣ Registrar en catálogo Backstage
     - id: register
