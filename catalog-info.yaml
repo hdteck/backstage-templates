@@ -1,49 +1,64 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: springboot-ci-template
-  title: Spring Boot App con CI/CD
-  description: Crea una aplicación Spring Boot con pipeline automático
-  annotations:
-    github.com/project-slug: hdteck/backstage-templates
+  name: springboot-from-repo
+  title: Crear app desde repo base con CI
+  description: Clona repo base, crea nuevo repo y añade CI
 
 spec:
   owner: user:guest
   type: service
 
   parameters:
-    - title: Configuración de la aplicación
+    - title: Configuración
       required:
-        - name
-        - repoUrl
+        - appName
+        - repoName
+        - baseRepo
       properties:
-        name:
+        appName:
           type: string
           title: Nombre de la aplicación
-        description:
+
+        repoName:
           type: string
-          title: Descripción
-        repoUrl:
+          title: Nombre del nuevo repositorio
+
+        baseRepo:
           type: string
-          title: Repositorio GitHub destino
+          title: Repositorio base
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
 
   steps:
+    # 1. CLONAR REPO BASE
     - id: fetch-base
-      name: Generar proyecto base
+      name: Clonar repo base
       action: fetch:template
       input:
-        url: ./skeleton
+        url: ${{ parameters.baseRepo }}
         values:
-          name: ${{ parameters.name }}
-          description: ${{ parameters.description }}
+          name: ${{ parameters.appName }}
 
+    # 2. AÑADIR TU CI
+    - id: add-ci
+      name: Añadir pipeline CI
+      action: fetch:template
+      input:
+        url: ./ci-template
+        targetPath: .github/workflows
+
+    # 3. CREAR REPO NUEVO
     - id: publish
-      name: Crear repositorio en GitHub
+      name: Crear repo en GitHub
       action: publish:github
       input:
-        repoUrl: ${{ parameters.repoUrl }}
+        repoUrl: github.com?owner=hdteck&repo=${{ parameters.repoName }}
         defaultBranch: main
 
+    # 4. REGISTRAR EN BACKSTAGE
     - id: register
       name: Registrar en catálogo
       action: catalog:register
