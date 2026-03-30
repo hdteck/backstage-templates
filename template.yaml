@@ -1,0 +1,49 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: springboot-ci-template
+  title: Spring Boot App con CI/CD
+  description: Crea una app Spring Boot con pipeline automático
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Configuración de la app
+      required:
+        - name
+        - repoUrl
+      properties:
+        name:
+          type: string
+          title: Nombre de la aplicación
+        description:
+          type: string
+          title: Descripción
+        repoUrl:
+          type: string
+          title: Repositorio GitHub
+
+  steps:
+    - id: fetch-base
+      name: Generar proyecto base
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+
+    - id: publish
+      name: Crear repo en GitHub
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+
+    - id: register
+      name: Registrar en catálogo
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
