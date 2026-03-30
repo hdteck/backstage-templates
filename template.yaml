@@ -3,13 +3,13 @@ kind: Template
 metadata:
   name: springboot-ci-template
   title: Spring Boot App con CI/CD
-  description: Crea una app Spring Boot con pipeline automático
+  description: Crea una aplicación Spring Boot con pipeline automático
 spec:
   owner: user:guest
   type: service
 
   parameters:
-    - title: Configuración de la app
+    - title: Configuración de la aplicación
       required:
         - name
         - repoUrl
@@ -22,10 +22,10 @@ spec:
           title: Descripción
         repoUrl:
           type: string
-          title: Repositorio GitHub
+          title: URL del repositorio GitHub destino
 
   steps:
-    - id: fetch-base
+    - id: fetch-skeleton
       name: Generar proyecto base
       action: fetch:template
       input:
@@ -34,8 +34,18 @@ spec:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
 
+    - id: copy-catalog
+      name: Copiar catalog-info al nuevo repo
+      action: fetch:template
+      input:
+        url: ./catalog-info.yaml
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+        targetPath: ./catalog-info.yaml
+
     - id: publish
-      name: Crear repo en GitHub
+      name: Crear repositorio en GitHub
       action: publish:github
       input:
         repoUrl: ${{ parameters.repoUrl }}
