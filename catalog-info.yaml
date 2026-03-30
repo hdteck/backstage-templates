@@ -2,9 +2,10 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: springboot-from-repo
-  title: Crear app desde repo base con CI
-  description: Clona repo base, crea nuevo repo y añade CI
-
+  title: Crear Spring Boot desde repo base con CI
+  description: Clona un repo base, crea nuevo repo y añade pipeline CI/CD
+  annotations:
+    github.com/project-slug: hdteck/backstage-templates
 spec:
   owner: user:guest
   type: service
@@ -33,7 +34,7 @@ spec:
               - github.com
 
   steps:
-    # 1. CLONAR REPO BASE
+    # 1️⃣ Clonar repo base
     - id: fetch-base
       name: Clonar repo base
       action: fetch:template
@@ -42,7 +43,7 @@ spec:
         values:
           name: ${{ parameters.appName }}
 
-    # 2. AÑADIR TU CI
+    # 2️⃣ Añadir CI/CD
     - id: add-ci
       name: Añadir pipeline CI
       action: fetch:template
@@ -50,15 +51,17 @@ spec:
         url: ./ci-template
         targetPath: .github/workflows
 
-    # 3. CREAR REPO NUEVO
+    # 3️⃣ Crear repo nuevo y subir todos los archivos
     - id: publish
-      name: Crear repo en GitHub
-      action: publish:github
+      name: Crear repo en GitHub y subir código
+      action: github:push
       input:
         repoUrl: github.com?owner=hdteck&repo=${{ parameters.repoName }}
-        defaultBranch: main
+        files:
+          - path: .
+            content: ${{ steps.fetch-base.output.files }}
 
-    # 4. REGISTRAR EN BACKSTAGE
+    # 4️⃣ Registrar en catálogo Backstage
     - id: register
       name: Registrar en catálogo
       action: catalog:register
