@@ -1,0 +1,76 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: springboot-from-existing-repo
+  title: Spring Boot desde repo existente
+  description: Crea un servicio Spring Boot usando código fuente de otro repositorio
+  tags:
+    - java
+    - springboot
+    - backend
+
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Configuración del proyecto
+      required:
+        - name
+        - repoUrl
+        - sourceRepoUrl
+      properties:
+        name:
+          title: Nombre del servicio
+          type: string
+
+        repoUrl:
+          title: Repositorio destino (nuevo)
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+        sourceRepoUrl:
+          title: Repositorio origen (código fuente)
+          type: string
+          description: Repo donde está el src de Spring Boot
+
+  steps:
+    # 1. Clonar repo origen
+    - id: fetch-source
+      name: Clonar código fuente
+      action: fetch:plain
+      input:
+        url: ${{ parameters.sourceRepoUrl }}
+
+    # 2. Añadir archivos template (catalog, CI, etc.)
+    - id: fetch-template
+      name: Añadir estructura Backstage
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+
+    # 3. Publicar repo nuevo
+    - id: publish
+      name: Crear repo en GitHub
+      action: publish:github
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+
+    # 4. Registrar en catálogo
+    - id: register
+      name: Registrar en Backstage
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps.publish.output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: Repositorio creado
+        url: ${{ steps.publish.output.remoteUrl }}
