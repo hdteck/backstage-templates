@@ -2,11 +2,8 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: ${{ values.name }}
-  description: Servicio Spring Boot
-  tags:
-    - java
-    - springboot
+  description: Servicio Spring Boot generado desde Backstage
 spec:
   type: service
-  owner: user:guest
   lifecycle: experimental
+  owner: user:guest
